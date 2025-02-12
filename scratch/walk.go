@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func OnVisit(path string, fi os.FileInfo, err error) error {
+func EnumeratingFiles(path string, fi os.FileInfo, err error) error {
 	if fi.IsDir() {
 		return nil
 	}
@@ -24,7 +24,7 @@ func Walk() {
 		log.Fatal("Please provide a -dir...")
 	}
 
-	err := filepath.Walk(*dir, OnVisit)
+	err := filepath.Walk(*dir, EnumeratingFiles)
 	if err != nil {
 		log.Fatal(err)
 	}

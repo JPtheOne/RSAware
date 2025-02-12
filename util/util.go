@@ -3,11 +3,11 @@ package util
 import (
 	"crypto/sha256"
 	"flag"
-	"github.com/otiai10/copy"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/otiai10/copy"
 )
 
 func RestoreandVerify() {
@@ -44,7 +44,7 @@ func OnVisit(path string, fi os.FileInfo, err error) error {
 	}
 
 	// Read original.
-	bsOrig, err := ioutil.ReadFile(path)
+	bsOrig, err := os.ReadFile(path)
 	if err != nil {
 		log.Println("Error reading", path)
 		log.Println(err)
@@ -54,7 +54,7 @@ func OnVisit(path string, fi os.FileInfo, err error) error {
 	hashOrig := sha256.Sum256(bsOrig)
 
 	// Read copy.
-	bsCopy, err := ioutil.ReadFile(path[1:]) // Remove underscore to get victim counterpart
+	bsCopy, err := os.ReadFile(path[1:]) // Remove underscore to get victim counterpart
 	if err != nil {
 		log.Println("Error reading", path[1:])
 		log.Println(err)

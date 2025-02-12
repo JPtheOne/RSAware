@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -32,7 +31,7 @@ func GenerateKey() {
 	_, errPrv := os.Stat("key.prv")
 
 	if errPub == nil && errPrv == nil {
-		pub, err := ioutil.ReadFile("key.pub")
+		pub, err := os.ReadFile("key.pub")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -46,13 +45,13 @@ func GenerateKey() {
 	}
 
 	pub := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
-	err = ioutil.WriteFile("key.pub", pub, 0644)
+	err = os.WriteFile("key.pub", pub, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	prv := x509.MarshalPKCS1PrivateKey(privateKey)
-	err = ioutil.WriteFile("key.prv", prv, 0644)
+	err = os.WriteFile("key.prv", prv, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
