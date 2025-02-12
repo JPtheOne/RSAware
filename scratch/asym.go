@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-func main() {
+func Rsaing() {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		log.Fatal(err)
