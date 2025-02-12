@@ -6,13 +6,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-
 	"github.com/otiai10/copy"
 )
 
-func RestoreandVerify() {
-	restore := flag.Bool("restore", false, "restore victim directory from _victim")
-	verify := flag.Bool("verify", false, "verify files in victim directory")
+func RestoreandVerify() { //DEBUGGING FUNCTION
+	restore := flag.Bool("restore", false, "restore victim directory from _victim") //Restore the whole victim folder
+	verify := flag.Bool("verify", false, "verify files in victim directory") //Verifies restored files
 
 	flag.Parse()
 
@@ -38,7 +37,7 @@ func RestoreandVerify() {
 	}
 }
 
-func OnVisit(path string, fi os.FileInfo, err error) error {
+func OnVisit(path string, fi os.FileInfo, err error) error { //Hash checker, seeks changes in files
 	if fi.IsDir() {
 		return nil
 	}
