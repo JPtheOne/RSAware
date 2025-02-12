@@ -1,4 +1,6 @@
+// Manual CheckSum getter
 package scratch
+
 
 import (
 	"crypto/sha256"

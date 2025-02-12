@@ -1,4 +1,6 @@
-// util/genkey.go
+//	Manual generation key pair for client-server
+//
+// Currently useless as there is not connection between client and serverw
 package scratch
 
 import (

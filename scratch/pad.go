@@ -1,3 +1,4 @@
+// Manual padding function for block ciphers
 package scratch
 
 import (

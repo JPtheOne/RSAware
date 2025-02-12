@@ -1,3 +1,5 @@
+// Debugging files to test ransomware's execution
+// Restores the content of the victim folder from the _victim folder
 package util
 
 import (

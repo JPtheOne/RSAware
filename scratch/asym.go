@@ -1,11 +1,12 @@
+// Manual implementation of RSA cipher
 package scratch
 
 import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"log"
 	"fmt"
+	"log"
 )
 
 func Rsaing() {
@@ -15,7 +16,7 @@ func Rsaing() {
 	}
 	publicKey := privateKey.PublicKey
 
-	p := []byte{0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5}
+	p := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5}
 	fmt.Printf("Plaintext:\t%v\n", p)
 
 	c, err := rsa.EncryptOAEP(

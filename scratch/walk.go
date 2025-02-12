@@ -1,3 +1,4 @@
+/// Manual functions to enumerate files in a directory
 package scratch
 
 import (

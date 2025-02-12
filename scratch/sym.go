@@ -1,3 +1,4 @@
+// Manual AES encryption and decryption using CBC mode with PKCS7 padding
 package scratch
 
 import (

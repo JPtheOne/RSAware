@@ -1,3 +1,4 @@
+// Debugging function to test reading files
 package scratch
 
 import (
