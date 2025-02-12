@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-func main() {
+func RestoreandVerify() {
 	restore := flag.Bool("restore", false, "restore victim directory from _victim")
 	verify := flag.Bool("verify", false, "verify files in victim directory")
 
@@ -31,14 +31,14 @@ func main() {
 			log.Fatal(err)
 		}
 	} else if *verify {
-		err := filepath.Walk("_victim", onVisit)
+		err := filepath.Walk("_victim", OnVisit)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 }
 
-func onVisit(path string, fi os.FileInfo, err error) error {
+func OnVisit(path string, fi os.FileInfo, err error) error {
 	if fi.IsDir() {
 		return nil
 	}

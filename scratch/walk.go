@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func onVisit(path string, fi os.FileInfo, err error) error {
+func OnVisit(path string, fi os.FileInfo, err error) error {
 	if fi.IsDir() {
 		return nil
 	}
@@ -24,7 +24,7 @@ func Walk() {
 		log.Fatal("Please provide a -dir...")
 	}
 
-	err := filepath.Walk(*dir, onVisit)
+	err := filepath.Walk(*dir, OnVisit)
 	if err != nil {
 		log.Fatal(err)
 	}
