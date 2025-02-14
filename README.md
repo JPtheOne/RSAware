@@ -9,4 +9,4 @@ ALL ETHICAL, ALL EDUCATIONAL.
   <img src="https://github.com/user-attachments/assets/39f38f68-d36c-4d91-bebe-836b129d1244" alt="imagen">
 </p>
 
- 🔥 Let's See What Happens!
+ 🔥 I'll let you know if it's ever lethal (or at least functional).
