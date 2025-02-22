@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Here will go the virus!")
+	fmt.Println("Server'd be here")
 
 	// Re
 }
