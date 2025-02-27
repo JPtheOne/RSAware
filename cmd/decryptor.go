@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Estructuras para almacenar la información de cifrado
@@ -161,17 +162,24 @@ func main() {
 		}
 
 		// Desencriptar el contenido real (almacenado en file.keys para ese archivo) usando aesKey.
-		decryptedData, err := decryptAES(info.Key, aesKey)
-		if err != nil {
-			log.Println("Error al desencriptar el archivo", info.Path, ":", err)
-			continue
-		}
+		// Desencriptar el contenido real (almacenado en file.keys para ese archivo) usando aesKey.
+decryptedData, err := decryptAES(info.Key, aesKey)
+if err != nil {
+    log.Println("Error al desencriptar el archivo", info.Path, ":", err)
+    continue
+}
 
-		// Escribir el archivo desencriptado.
-		if err := os.WriteFile(info.Path, decryptedData, 0666); err != nil {
-			log.Println("Error al escribir el archivo desencriptado", info.Path, ":", err)
-		} else {
-			fmt.Println("Archivo desencriptado:", info.Path)
-		}
+// Remover la extensión ".jjj" para restaurar el nombre original
+originalPath := info.Path
+if strings.HasSuffix(originalPath, ".jjj") {
+    originalPath = originalPath[:len(originalPath)-len(".jjj")]
+}
+
+if err := os.WriteFile(originalPath, decryptedData, 0666); err != nil {
+    log.Println("Error al escribir el archivo desencriptado", originalPath, ":", err)
+} else {
+    fmt.Println("Archivo desencriptado:", originalPath)
+}
+
 	}
 }
