@@ -2,7 +2,7 @@
 
 ## 🚀 A Bold Attempt 
 
-This was conceived as an experiment, I'm trying to code it without breaking my laptop. 😅 
+This was conceived as an experiment, I tried to code it without breaking my laptop. 😅 
 ALL ETHICAL, ALL EDUCATIONAL.
 
 ## ✨ Features
