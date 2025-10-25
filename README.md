@@ -1,7 +1,5 @@
 # 🖥️ Home-made Ransomware💡
 
-## 🚀 A Bold Attempt 
-
 This was conceived as an experiment, I tried to code it without breaking my laptop. 😅 
 ALL ETHICAL, ALL EDUCATIONAL.
 
